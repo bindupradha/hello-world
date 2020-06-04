@@ -1,0 +1,35 @@
+Login-AzureRmAccount
+Set-AzureRmContext -Subscription "subscriptionname"
+$rgname= "newrg"
+$location= "eastus"
+$storagelocation= "newpat"
+$nicname= "web-nic1"
+$publicIPname="web-ip"
+$vnetname= "demo"
+$subnetname= "frontendsubnet"
+New-AzureRmResourceGroup -Name $rgname -Location $location
+New-AzureRmStorageAccount -ResourceGroupName $rgname -Name $storagelocation -SkuName Standard_LRS -Location $location
+$subnetname=New-AzureRmVirtualNetwork -Name $vnetname -ResourceGroupName $rgname -Location $location -AddressPrefix "10.0.1.0/16" -subnet $subnetname
+$subnetname=Get-AzureRmVirtualNetworkSubnetConfig -Name $subnetname -VirtualNetwork $vnetname 
+Add-AzureRmVirtualNetworkSubnetConfig -Name backendsubnet -VirtualNetwork $vnetname -AddressPrefix 10.0.1.0/24
+Set-AzureRmVirtualNetwork -VirtualNetwork $vnetname
+$publicIP= New-AzureRmPublicIpAddress -Name $publicIPname -ResourceGroupName $rgname -Location $location -Sku Standard -AllocationMethod Dynamic -IpAddressVersion IPv4 -DomainNameLabel "dss-webvm1"
+$nic= New-AzureRmNetworkInterface -Name $nicname -ResourceGroupName $rgname -Location $location -SubnetId $vnetname.subnets[0].id -PublicIpAddressId
+$Publicip.Id -privateipaddress "10.0.1.12"
+$vnmame= "webvm1"
+$vmsize = "standard_DS1"
+$vmconfig=new-azurermvmconfig -VMName $vmname -VMSize $vmsize
+$pubname= "microsftwindowsserver"
+$offername="windowsserver"
+$skuname="2012-R2-DataCenter"
+$diskName= "webvm1osdisk"
+$cred= Get-Credential -Message "type the name&password"
+$vmconfig = Set-AzureRmVMOperatingSystem -VM $vmconfig -Windows -ComputerName $vmname -Credential $cred -ProvisionVMAgent -EnableAutoUpdate
+$vmconfig = Set-AzureRmVMSourceImage -vm $vmconfig -PublisherName $pubname -Offer $offername -Skus $skuname -Version "latest"
+$vmconfig = Add-AzureRmVMNetworkInterface -VM $vmconfig -Id $nic.Id
+$osDiskuri=$sta.primaryendpoints.blob.tostring{}+ "vhds/" + $diskName + ".vhd"
+$vmconfig= Set-AzureRmVMOSDisk -VM $vmconfig -Name $diskName -VhdUri $osDiskuri -Caching ReadWrite -CreateOption FromImage
+
+New-AzureRmVM -ResourceGroupName $rgname -Location $location -VM $vmconfig
+
+
